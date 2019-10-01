@@ -61,6 +61,7 @@ static void usage(char *progname)
 		" -s        slave only mode (overrides configuration file)\n"
 		" -l [num]  set the logging level to 'num'\n"
 		" -m        print messages to stdout\n"
+		" -n [file] print messages to logfile\n"
 		" -q        do not print messages to the syslog\n"
 		" -v        prints the software version and exits\n"
 		" -h        prints this message and exits\n"
@@ -70,7 +71,7 @@ static void usage(char *progname)
 
 int main(int argc, char *argv[])
 {
-	char *config = NULL, *req_phc = NULL, *progname;
+	char *config = NULL, *req_phc = NULL, *progname, *logfile = NULL;
 	enum clock_type type = CLOCK_TYPE_ORDINARY;
 	int c, err = -1, index, print_level;
 	struct clock *clock = NULL;
@@ -89,7 +90,7 @@ int main(int argc, char *argv[])
 	/* Process the command line arguments. */
 	progname = strrchr(argv[0], '/');
 	progname = progname ? 1+progname : argv[0];
-	while (EOF != (c = getopt_long(argc, argv, "AEP246HSLf:i:p:sl:mqvh",
+	while (EOF != (c = getopt_long(argc, argv, "AEP246HSLf:i:p:sl:mn:qvh",
 				       opts, &index))) {
 		switch (c) {
 		case 0:
@@ -159,6 +160,11 @@ int main(int argc, char *argv[])
 		case 'm':
 			config_set_int(cfg, "verbose", 1);
 			break;
+		case 'n':
+			config_set_int(cfg, "use_filelog", 1);
+			fprintf(stdout, "case 'n': log_file: %s\n", optarg);
+			logfile = optarg;
+			break;
 		case 'q':
 			config_set_int(cfg, "use_syslog", 0);
 			break;
@@ -184,6 +190,7 @@ int main(int argc, char *argv[])
 	print_set_progname(progname);
 	print_set_tag(config_get_string(cfg, NULL, "message_tag"));
 	print_set_verbose(config_get_int(cfg, NULL, "verbose"));
+	print_set_filelog(config_get_int(cfg, NULL, "use_filelog"), logfile);
 	print_set_syslog(config_get_int(cfg, NULL, "use_syslog"));
 	print_set_level(config_get_int(cfg, NULL, "logging_level"));
 
